@@ -5,3 +5,6 @@ out
 dist
 *.log
 .env
+
+# Externals
+externals/
