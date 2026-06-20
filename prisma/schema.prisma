@@ -1,0 +1,33 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+}
+
+model Inbox {
+  id           String    @id @default(cuid())
+  displayName  String
+  emailAddress String    @unique
+  createdAt    DateTime  @default(now())
+  emails       Email[]
+}
+
+model Email {
+  id          String   @id @default(cuid())
+  inboxId     String
+  inbox       Inbox    @relation(fields: [inboxId], references: [id], onDelete: Cascade)
+  fromAddress String
+  subject     String
+  bodyText    String?
+  bodyHtml    String?
+  attachments Json?
+  receivedAt  DateTime @default(now())
+  isRead      Boolean  @default(false)
+
+  @@index([inboxId])
+}
