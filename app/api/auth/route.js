@@ -1,29 +1,42 @@
-import prisma from "@/lib/db";
 import { NextResponse } from "next/server";
+import { setSessionCookie, isAuthenticated } from "@/lib/auth";
 
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { password } = body || {};
+    const { action, password } = body || {};
 
-    if (!password || password !== process.env.DASH_PASSWORD) {
-      return NextResponse.json({ error: "Invalid password" }, { status: 401 });
+    if (action === "login") {
+      if (!password || password !== process.env.DASH_PASSWORD) {
+        return NextResponse.json({ error: "Invalid password" }, { status: 401 });
+      }
+
+      const res = NextResponse.json({ ok: true });
+      setSessionCookie(res, password);
+      return res;
     }
 
-    const res = NextResponse.json({ ok: true });
-    res.cookies.set("aeg_session", password, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    });
-    return res;
+    if (action === "logout") {
+      const cookieHeader = req.headers.get("cookie") || "";
+      if (!isAuthenticated({ headers: { cookie: cookieHeader } })) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      const res = NextResponse.json({ ok: true });
+      setSessionCookie(res, "");
+      return res;
+    }
+
+    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 }
 
-export async function GET() {
-  return NextResponse.json({ ok: true });
+export async function GET(req) {
+  const cookieHeader = req.headers.get("cookie") || "";
+  if (isAuthenticated({ headers: { cookie: cookieHeader } })) {
+    return NextResponse.json({ authenticated: true });
+  }
+  return NextResponse.json({ authenticated: false }, { status: 401 });
 }

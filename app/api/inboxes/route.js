@@ -20,15 +20,3 @@ export async function PATCH(req) {
   });
   return NextResponse.json(updated);
 }
-
-export async function PATCH(req) {
-  const body = await req.json();
-  const updated = await prisma.inbox.update({
-    where: { id: body.id },
-    data: {
-      displayName: body.displayName,
-      emailAddress: `${body.localPart}@${process.env.DOMAIN_SUFFIX}`,
-    },
-  });
-  return NextResponse.json(updated);
-}
