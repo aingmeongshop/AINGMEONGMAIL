@@ -1,11 +1,29 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import DOMPurify from "dompurify";
 
 export default function InboxClient(props) {
+  const router = useRouter();
+  const [authed, setAuthed] = useState(null);
   const [emails, setEmails] = useState(props.initialEmails || []);
   const [selected, setSelected] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/auth")
+      .then((r) => r.json())
+      .then((data) => {
+        setAuthed(data.authenticated === true);
+      })
+      .catch(() => setAuthed(false));
+  }, []);
+
+  if (authed === false) {
+    router.replace("/admin/login");
+    return null;
+  }
+  if (authed === null) return <div className="p-8">Loading…</div>;
 
   useEffect(() => {
     setEmails(props.initialEmails || []);
